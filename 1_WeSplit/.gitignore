@@ -1,3 +1,6 @@
+/.build
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+
 .DS_Store
 
 # Xcode
