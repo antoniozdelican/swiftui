@@ -9,13 +9,22 @@ import SwiftUI
 
 struct FlagImage: View {
     var country: String
+    var opacity: Double = 1
+    var rotationDeegres: Double = 0
+    var wrongRotationDeegres: Double = 0
+    var offset: CGFloat = 0
     
     var body: some View {
         Image(country)
             .renderingMode(.original)
             .clipShape(Capsule())
             .overlay(Capsule().stroke(Color.black, lineWidth: 1))
-            .shadow(color: .black, radius: 2)
+            .shadow(color: Color.black, radius: 2)
+            
+            .opacity(opacity)
+            .animation(opacity == 1 ? nil : Animation.easeOut(duration: 1))
+            .rotation3DEffect(.degrees(rotationDeegres), axis: (x: 0.0, y: 1.0, z: 0.0))
+            .rotation3DEffect(.degrees(wrongRotationDeegres), axis: (x: 1.0, y: 0.0, z: 0.0))
     }
 }
 
@@ -27,6 +36,12 @@ struct ContentView: View {
     @State private var scoreTitle = ""
     @State private var userScore = 0
     @State private var scoreMessage = ""
+    
+    @State private var animationAmount = 0.0
+    @State private var wrongAnimationAmount = 0.0
+    @State private var correctButtonTapped = false
+    
+    @State private var buttonTapped = false
     
     var body: some View {
         ZStack {
@@ -45,8 +60,18 @@ struct ContentView: View {
                 ForEach(0..<3) { number in
                     Button(action: {
                         self.flagTapped(number)
+                        if buttonTapped {
+                            withAnimation {
+                                self.animationAmount += 360
+                                self.wrongAnimationAmount += 360
+                            }
+                        }
                     }) {
-                        FlagImage(country: self.countries[number])
+                        if buttonTapped {
+                            FlagImage(country: self.countries[number], opacity: self.getOpacity(number), rotationDeegres: self.getRotationDegrees(number), wrongRotationDeegres: self.getWrongRotationDegrees(number))
+                        } else {
+                            FlagImage(country: self.countries[number])
+                        }
                     }
                 }
                 
@@ -68,16 +93,44 @@ struct ContentView: View {
             scoreTitle = "Correct"
             userScore += 1
             scoreMessage = "Your score is \(userScore)"
+            correctButtonTapped = true
         } else {
             scoreTitle = "Wrong"
             scoreMessage = "That’s the flag of \(countries[number])"
+            correctButtonTapped = false
         }
         showingScore = true
+        buttonTapped = true
+    }
+    
+    func getOpacity(_ number: Int) -> Double {
+        if number == correctAnswer {
+            return 1.0
+        } else {
+            return 0.25
+        }
+    }
+    
+    func getRotationDegrees(_ number: Int) -> Double {
+        if number == correctAnswer && correctButtonTapped {
+            return animationAmount
+        } else {
+            return 0
+        }
+    }
+    
+    func getWrongRotationDegrees(_ number: Int) -> Double {
+        if number == correctAnswer && !correctButtonTapped {
+            return wrongAnimationAmount
+        } else {
+            return 0
+        }
     }
     
     func askQuestion() {
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
+        buttonTapped = false
     }
 }
 
